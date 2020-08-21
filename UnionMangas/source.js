@@ -2597,28 +2597,56 @@ process.umask = function() { return 0; };
 },{}],46:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HanaScan = void 0;
+exports.UnionMangas = void 0;
 const paperback_extensions_common_1 = require("paperback-extensions-common");
-const HS_DOMAIN = 'https://hanascan.com';
-class HanaScan extends paperback_extensions_common_1.Source {
+const LH_DOMAIN = 'https://unionmangas.top/';
+const b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+// Regular expression to check formal correctness of base64 encoded strings
+const b64re = /^(?:[A-Za-z\d+\/]{4})*?(?:[A-Za-z\d+\/]{2}(?:==)?|[A-Za-z\d+\/]{3}=?)?$/;
+const _atob = (string) => {
+    // atob can work with strings with whitespaces, even inside the encoded part,
+    // but only \t, \n, \f, \r and ' ', which can be stripped.
+    string = String(string).replace(/[\t\n\f\r ]+/g, "");
+    if (!b64re.test(string))
+        throw new TypeError("Failed to execute 'atob' on 'Window': The string to be decoded is not correctly encoded.");
+    // Adding the padding if missing, for semplicity
+    string += "==".slice(2 - (string.length & 3));
+    var bitmap, result = "", r1, r2, i = 0;
+    for (; i < string.length;) {
+        bitmap = b64.indexOf(string.charAt(i++)) << 18 | b64.indexOf(string.charAt(i++)) << 12
+            | (r1 = b64.indexOf(string.charAt(i++))) << 6 | (r2 = b64.indexOf(string.charAt(i++)));
+        result += r1 === 64 ? String.fromCharCode(bitmap >> 16 & 255)
+            : r2 === 64 ? String.fromCharCode(bitmap >> 16 & 255, bitmap >> 8 & 255)
+                : String.fromCharCode(bitmap >> 16 & 255, bitmap >> 8 & 255, bitmap & 255);
+    }
+    return result;
+};
+const atob_polyfilled = (b64) => {
+    // let _window = window
+    if (typeof window !== 'undefined' && (window === null || window === void 0 ? void 0 : window.atob) !== undefined) {
+        return window.atob(b64);
+    }
+    return _atob(b64);
+};
+class UnionMangas extends paperback_extensions_common_1.Source {
     constructor(cheerio) {
         super(cheerio);
     }
-    get version() { return '0.2.3'; }
-    get name() { return 'HanaScan'; }
-    get description() { return 'Extension that pulls manga from HanaScan'; }
-    get author() { return 'HanaScan'; }
-    get authorWebsite() { return 'http://github.com/mparnaiba'; }
+    get version() { return '0.2.2'; }
+    get name() { return 'UnionMangas'; }
+    get description() { return 'Extension that pulls manga from UnionMangas. Thumbnails are currently broken.'; }
+    get author() { return 'chyyran'; }
+    get authorWebsite() { return 'http://github.com/chyyran'; }
     get icon() { return "logo.png"; }
     get hentaiSource() { return false; }
-    getMangaShareUrl(mangaId) { return `${HS_DOMAIN}/${mangaId}.html`; }
+    getMangaShareUrl(mangaId) { return `${LH_DOMAIN}/${mangaId}.html`; }
     get sourceTags() { return [{ text: "raw", type: paperback_extensions_common_1.TagType.INFO }]; }
     getMangaDetailsRequest(ids) {
         let requests = [];
         for (let id of ids) {
             let metadata = { 'id': id };
             requests.push(createRequestObject({
-                url: `${HS_DOMAIN}/${id}.html`,
+                url: `${LH_DOMAIN}/${id}.html`,
                 metadata: metadata,
                 method: 'GET'
             }));
@@ -2626,50 +2654,44 @@ class HanaScan extends paperback_extensions_common_1.Source {
         return requests;
     }
     getMangaDetails(data, metadata) {
-        var _a, _b, _c, _d, _e, _f, _g, _h;
+        var _a, _b, _c, _d, _e;
         let $ = this.cheerio.load(data);
         let titles = [];
         let author;
         let tags = [createTagSection({ id: '0', label: 'genre', tags: [] })];
         let status = paperback_extensions_common_1.MangaStatus.ONGOING; // Default to ongoing
         let views;
-        let lang;
+        let lang = paperback_extensions_common_1.LanguageCode.JAPANESE;
         let breadcrumbContext = (_a = $('li', $('.breadcrumb')).toArray()) === null || _a === void 0 ? void 0 : _a[2];
         let title = (_b = $('span', breadcrumbContext).text()
             .replace("- Raw", "").trim()) !== null && _b !== void 0 ? _b : '';
         titles.push(title);
         let image = $('img', breadcrumbContext).attr('src');
-        lang = paperback_extensions_common_1.LanguageCode.JAPANESE;
         let objContext = $('li', $('.manga-info')).toArray();
         for (let i = 0; i < objContext.length; i++) {
             switch (i) {
-                case 0: {
-                    const _titles = (_f = (_e = (_d = (_c = $(objContext[i])) === null || _c === void 0 ? void 0 : _c.text()) === null || _d === void 0 ? void 0 : _d.replace("Other names: ", "")) === null || _e === void 0 ? void 0 : _e.trim()) === null || _f === void 0 ? void 0 : _f.split(',');
-                    if (!_titles)
-                        break;
-                    for (let title of $(objContext[i]).text().replace("Other names: ", "").trim().split(',')) {
-                        titles.push(title.trim());
-                    }
-                    break;
-                }
                 case 1: {
-                    author = (_g = $('a', $(objContext[i])).text()) !== null && _g !== void 0 ? _g : '';
+                    (_c = titles.push($(objContext[i]).text().replace("Other names: ", "").trim())) !== null && _c !== void 0 ? _c : '';
                     break;
                 }
                 case 2: {
+                    author = (_d = $('a', $(objContext[i])).text()) !== null && _d !== void 0 ? _d : '';
+                    break;
+                }
+                case 3: {
                     for (let obj of $('a', $(objContext[i]).toArray()).toArray()) {
                         let text = $(obj).text();
                         tags[0].tags.push(createTag({ label: text, id: text }));
                     }
                     break;
                 }
-                case 3: {
+                case 4: {
                     let text = $('a', $(objContext[i])).text();
-                    status = text.includes("Ongoing") ? paperback_extensions_common_1.MangaStatus.ONGOING : paperback_extensions_common_1.MangaStatus.COMPLETED;
+                    status = text.includes("On Going") ? paperback_extensions_common_1.MangaStatus.ONGOING : paperback_extensions_common_1.MangaStatus.COMPLETED;
                     break;
                 }
-                case 4: {
-                    views = (_h = $(objContext[i]).text().replace(" Views: ", "")) !== null && _h !== void 0 ? _h : '';
+                case 6: {
+                    views = (_e = $(objContext[i]).text().replace(" Views: ", "")) !== null && _e !== void 0 ? _e : '';
                     break;
                 }
             }
@@ -2689,14 +2711,14 @@ class HanaScan extends paperback_extensions_common_1.Source {
                 langFlag: lang,
                 langName: lang,
                 views: views ? Number.parseInt(views, 10) : undefined,
-                hentai: false // This is an 18+ source
+                hentai: false,
             })];
     }
     getChaptersRequest(mangaId) {
         let metadata = { 'id': mangaId };
         mangaId = mangaId.replace(".html", "");
         return createRequestObject({
-            url: `${HS_DOMAIN}/${mangaId}.html`,
+            url: `${LH_DOMAIN}/${mangaId}.html`,
             metadata: metadata,
             method: 'GET'
         });
@@ -2705,8 +2727,25 @@ class HanaScan extends paperback_extensions_common_1.Source {
         var _a, _b;
         let $ = this.cheerio.load(data);
         let chapters = [];
-        let lang = paperback_extensions_common_1.LanguageCode.JAPANESE;
-        for (let obj of $('p', $('#list-chapters')).toArray().reverse()) {
+        let lang;
+        let objContext = $('li', $('.manga-info')).toArray();
+        for (let i = 0; i < objContext.length; i++) {
+            switch (i) {
+                case 3: {
+                    for (let obj of $('a', $(objContext[i]).toArray()).toArray()) {
+                        let text = $(obj).text();
+                        if (text.toLowerCase().includes("raw")) {
+                            lang = paperback_extensions_common_1.LanguageCode.JAPANESE;
+                        }
+                        else {
+                            lang = paperback_extensions_common_1.LanguageCode.ENGLISH;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        for (let obj of $('tr', $('.table')).toArray().reverse()) {
             let id = $('.chapter', $(obj)).attr('href');
             let name = $('b', $(obj)).text().trim();
             //TODO Add the date calculation into here
@@ -2731,7 +2770,7 @@ class HanaScan extends paperback_extensions_common_1.Source {
             chapters.push(createChapter({
                 id: id,
                 mangaId: metadata.id,
-                chapNum: Number.parseFloat((_b = (_a = name === null || name === void 0 ? void 0 : name.match(/(?:- Raw Chap )([\d\.]+$)/)) === null || _a === void 0 ? void 0 : _a[1]) !== null && _b !== void 0 ? _b : '0'),
+                chapNum: Number.parseFloat((_b = (_a = name === null || name === void 0 ? void 0 : name.match(/(?:- Raw Chapter )([\d\.]+$)/)) === null || _a === void 0 ? void 0 : _a[1]) !== null && _b !== void 0 ? _b : "0"),
                 langCode: lang !== null && lang !== void 0 ? lang : paperback_extensions_common_1.LanguageCode.UNKNOWN,
                 name: name,
                 time: date
@@ -2742,7 +2781,7 @@ class HanaScan extends paperback_extensions_common_1.Source {
     getChapterDetailsRequest(mangaId, chapId) {
         let metadata = { 'mangaId': mangaId, 'chapterId': chapId };
         return createRequestObject({
-            url: `${HS_DOMAIN}/${chapId}.html`,
+            url: `${LH_DOMAIN}/${chapId}.html`,
             metadata: metadata,
             method: 'GET',
         });
@@ -2751,7 +2790,13 @@ class HanaScan extends paperback_extensions_common_1.Source {
         let $ = this.cheerio.load(data);
         let pages = [];
         for (let obj of $('img.chapter-img', $('.chapter-content')).toArray()) {
-            pages.push($(obj).attr('src').trim());
+            let srcBase64 = $(obj).attr('data-src');
+            if (srcBase64 === null || srcBase64 === void 0 ? void 0 : srcBase64.startsWith("http")) {
+                pages.push(srcBase64.trim());
+            }
+            else {
+                pages.push(atob_polyfilled(srcBase64.replace('PGJyIC8+', "")).trim()); // "PGJyIC8+" = btoa('<br />')
+            }
         }
         metadata.chapterId = metadata.chapterId.replace(".html", "");
         metadata.chapterId = metadata.chapterId.replace(/-chapter-\d/g, "");
@@ -2767,22 +2812,19 @@ class HanaScan extends paperback_extensions_common_1.Source {
         var _a;
         let title = (_a = query.title) === null || _a === void 0 ? void 0 : _a.replace(" ", "+");
         return createRequestObject({
-            url: `${HS_DOMAIN}/manga-list.html?m_status=&author=&group=&name=${title}&genre=&ungenre=`,
+            url: `${LH_DOMAIN}/danh-sach-truyen.html?m_status=&author=&group=&name=${title}&genre=&ungenre=`,
             timeout: 4000,
             method: "GET"
         });
     }
     search(data, metadata) {
-        var _a, _b;
+        var _a, _b, _c;
         let $ = this.cheerio.load(data);
         let mangaTiles = [];
-        for (let obj of $('.row.top').toArray()) {
-            let title = (_a = $('a', $('.media-heading', $(obj))).text()) !== null && _a !== void 0 ? _a : '';
-            let id = $('a', $('.media-heading', $(obj))).attr('href');
-            if (!id) {
-                continue;
-            }
-            let img = (_b = $('img', $(obj)).attr('data-original')) !== null && _b !== void 0 ? _b : '';
+        for (let obj of $('.row-list').toArray()) {
+            let title = (_a = $('a', $('.media-heading', $(obj))).text().replace('- Raw', '')) !== null && _a !== void 0 ? _a : '';
+            let id = (_b = $('a', $('.media-heading', $(obj))).attr('href')) !== null && _b !== void 0 ? _b : '';
+            let img = (_c = $('img', $(obj)).attr('src')) !== null && _c !== void 0 ? _c : '';
             let textContext = $('.media-body', $(obj));
             let primaryText = createIconText({ text: $('span', textContext).text() });
             id = id.replace(".html", "");
@@ -2796,30 +2838,25 @@ class HanaScan extends paperback_extensions_common_1.Source {
         return mangaTiles;
     }
     getHomePageSectionRequest() {
-        let request = createRequestObject({ url: `${HS_DOMAIN}`, method: 'GET' });
+        let request = createRequestObject({ url: `${LH_DOMAIN}`, method: 'GET' });
         let section1 = createHomeSection({ id: 'latest_release', title: 'Latest Manga Releases' });
-        let section2 = createHomeSection({ id: 'hot_manga', title: 'Top Hot Today' });
-        return [createHomeSectionRequest({ request: request, sections: [section1, section2] })];
+        return [createHomeSectionRequest({ request: request, sections: [section1] })];
     }
     getHomePageSections(data, sections) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         let $ = this.cheerio.load(data);
         let latestManga = [];
-        let hotManga = [];
         let context = (_b = (_a = $('#contentstory')) === null || _a === void 0 ? void 0 : _a.toArray()) === null || _b === void 0 ? void 0 : _b[0];
-        for (let item of (_d = (_c = $('.itemupdate', $(context))) === null || _c === void 0 ? void 0 : _c.toArray()) !== null && _d !== void 0 ? _d : []) {
-            let id = (_e = $('a', $(item)).attr('href')) === null || _e === void 0 ? void 0 : _e.replace(".html", "");
-            if (!id) {
-                continue;
-            }
-            let titleText = (_j = (_h = (_g = (_f = $('.title-h3', $(item)).text()) === null || _f === void 0 ? void 0 : _f.replace('- Raw', '')) === null || _g === void 0 ? void 0 : _g.replace('- RAW', '')) === null || _h === void 0 ? void 0 : _h.replace('(Manga)', '')) === null || _j === void 0 ? void 0 : _j.trim();
-            if (!titleText) {
+        for (let item of $('.itemupdate', $(context)).toArray()) {
+            let id = (_c = $('a', $(item)).attr('href')) === null || _c === void 0 ? void 0 : _c.replace(".html", "");
+            let titleText = (_h = (_g = (_f = (_e = (_d = $('.title-h3', $(item))) === null || _d === void 0 ? void 0 : _d.text()) === null || _e === void 0 ? void 0 : _e.replace('- Raw', '')) === null || _f === void 0 ? void 0 : _f.replace('- RAW', '')) === null || _g === void 0 ? void 0 : _g.replace('(Manga)', '')) === null || _h === void 0 ? void 0 : _h.trim();
+            if (!id || !titleText) {
                 continue;
             }
             let title = createIconText({
                 text: titleText
             });
-            let image = (_k = $('.lazy', $(item)).attr('data-original')) !== null && _k !== void 0 ? _k : '';
+            let image = (_k = (_j = $('.myimg', $(item))) === null || _j === void 0 ? void 0 : _j.attr('data-src')) !== null && _k !== void 0 ? _k : '';
             let views = (_m = (_l = $('.view', $(item))) === null || _l === void 0 ? void 0 : _l.text()) !== null && _m !== void 0 ? _m : 0;
             latestManga.push(createMangaTile({
                 id: id,
@@ -2829,32 +2866,11 @@ class HanaScan extends paperback_extensions_common_1.Source {
             }));
         }
         sections[0].items = latestManga;
-        let hotContext = $('.topday').toArray()[0];
-        for (let item of (_p = (_o = $('.item', $(hotContext))) === null || _o === void 0 ? void 0 : _o.toArray()) !== null && _p !== void 0 ? _p : []) {
-            let id = (_q = $('a', $(item)).attr('href')) === null || _q === void 0 ? void 0 : _q.replace(".html", "");
-            if (!id) {
-                continue;
-            }
-            let titleText = (_v = (_u = (_t = (_s = (_r = $('h3', $(item))) === null || _r === void 0 ? void 0 : _r.text()) === null || _s === void 0 ? void 0 : _s.replace('- Raw', '')) === null || _t === void 0 ? void 0 : _t.replace('- RAW', '')) === null || _u === void 0 ? void 0 : _u.replace('(Manga)', '')) === null || _v === void 0 ? void 0 : _v.trim();
-            if (!titleText) {
-                continue;
-            }
-            let title = createIconText({
-                text: titleText
-            });
-            let image = (_w = $('.owl-lazy', $(item)).attr('data-src')) !== null && _w !== void 0 ? _w : '';
-            hotManga.push(createMangaTile({
-                id: id,
-                title: title,
-                image: image,
-            }));
-        }
-        sections[1].items = hotManga;
         return sections;
     }
     requestModifier(request) {
         let headers = request.headers == undefined ? {} : request.headers;
-        headers['Referer'] = `${HS_DOMAIN}`;
+        headers['Referer'] = `${LH_DOMAIN}`;
         return createRequestObject({
             url: request.url,
             method: request.method,
@@ -2868,7 +2884,7 @@ class HanaScan extends paperback_extensions_common_1.Source {
         });
     }
 }
-exports.HanaScan = HanaScan;
+exports.UnionMangas = UnionMangas;
 
 },{"paperback-extensions-common":31}]},{},[46])(46)
 });
