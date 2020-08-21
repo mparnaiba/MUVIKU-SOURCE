@@ -2604,7 +2604,7 @@ class HanaScan extends paperback_extensions_common_1.Source {
     constructor(cheerio) {
         super(cheerio);
     }
-    get version() { return '0.2.3'; }
+    get version() { return '0.4.3.5'; }
     get name() { return 'HanaScan'; }
     get description() { return 'Extension that pulls manga from HanaScan'; }
     get author() { return 'HanaScan'; }
