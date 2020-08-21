@@ -6,7 +6,7 @@ export class HanaScan extends Source {
     super(cheerio)
   }
 
-  get version(): string { return '0.2.3' }
+  get version(): string { return '0.4.3.5' }
   get name(): string { return 'HanaScan' }
   get description(): string { return 'Extension that pulls manga from HanaScan' }
   get author(): string { return 'HanaScan' }
