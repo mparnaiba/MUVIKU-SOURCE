@@ -2607,8 +2607,8 @@ class HanaScan extends paperback_extensions_common_1.Source {
     get version() { return '0.2.2'; }
     get name() { return 'HanaScan'; }
     get description() { return 'Extension that pulls manga from HanaScan'; }
-    get author() { return 'chyyran'; }
-    get authorWebsite() { return 'http://github.com/chyyran'; }
+    get author() { return 'MuviKu'; }
+    get authorWebsite() { return 'http://github.com/muviku'; }
     get icon() { return "logo.png"; }
     get hentaiSource() { return false; }
     getMangaShareUrl(mangaId) { return `${HS_DOMAIN}/${mangaId}.html`; }
