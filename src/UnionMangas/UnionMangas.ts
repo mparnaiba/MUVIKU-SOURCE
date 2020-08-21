@@ -46,7 +46,7 @@ export class UnionMangas extends Source {
   get name(): string { return 'UnionMangas' }
   get description(): string { return 'Extension that pulls manga from UnionMangas. Thumbnails are currently broken.' }
   get author(): string { return 'Matheus Parnaíba' }
-  get authorWebsite(): string { return 'http://github.com/chyyran' }
+  get authorWebsite(): string { return 'http://github.com/mparnaiba' }
   get icon(): string { return "logo.png" }
   get hentaiSource(): boolean { return false }
   getMangaShareUrl(mangaId: string): string | null { return `${LH_DOMAIN}/${mangaId}.html` }
