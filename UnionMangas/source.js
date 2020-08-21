@@ -2636,7 +2636,7 @@ class UnionMangas extends paperback_extensions_common_1.Source {
     get name() { return 'UnionMangas'; }
     get description() { return 'Extension that pulls manga from UnionMangas. Thumbnails are currently broken.'; }
     get author() { return 'Matheus Parnaíba'; }
-    get authorWebsite() { return 'http://github.com/chyyran'; }
+    get authorWebsite() { return 'http://github.com/mparnaiba'; }
     get icon() { return "logo.png"; }
     get hentaiSource() { return false; }
     getMangaShareUrl(mangaId) { return `${LH_DOMAIN}/${mangaId}.html`; }
