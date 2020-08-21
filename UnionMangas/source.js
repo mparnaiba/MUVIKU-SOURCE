@@ -2599,7 +2599,7 @@ process.umask = function() { return 0; };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UnionMangas = void 0;
 const paperback_extensions_common_1 = require("paperback-extensions-common");
-const LH_DOMAIN = 'https://unionmangas.top/ayx';
+const LH_DOMAIN = 'https://unionleitor.top/';
 const b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 // Regular expression to check formal correctness of base64 encoded strings
 const b64re = /^(?:[A-Za-z\d+\/]{4})*?(?:[A-Za-z\d+\/]{2}(?:==)?|[A-Za-z\d+\/]{3}=?)?$/;
@@ -2632,7 +2632,7 @@ class UnionMangas extends paperback_extensions_common_1.Source {
     constructor(cheerio) {
         super(cheerio);
     }
-    get version() { return '0.2.3'; }
+    get version() { return '0.2.5'; }
     get name() { return 'UnionMangas'; }
     get description() { return 'Extension that pulls manga from UnionMangas. Thumbnails are currently broken.'; }
     get author() { return 'Matheus Parnaíba'; }
