@@ -1,11 +1,11 @@
 import cheerio from 'cheerio'
-import { LoveHeaven } from "../LoveHeaven/LoveHeaven";
+import { UnionMangas } from "../UnionMangas/UnionMangas";
 import { APIWrapper, Source } from 'paperback-extensions-common';
 
-describe('LoveHeaven Tests', function () {
+describe('UnionMangas Tests', function () {
 
     var wrapper: APIWrapper = new APIWrapper();
-    var source: Source = new LoveHeaven(cheerio);
+    var source: Source = new UnionMangas(cheerio);
     var chai = require('chai'), expect = chai.expect, should = chai.should();
     var chaiAsPromised = require('chai-as-promised');
     chai.use(chaiAsPromised);

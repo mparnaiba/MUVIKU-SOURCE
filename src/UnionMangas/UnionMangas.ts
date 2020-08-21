@@ -1,5 +1,5 @@
 import { Source, Manga, MangaStatus, Chapter, ChapterDetails, HomeSectionRequest, HomeSection, MangaTile, SearchRequest, LanguageCode, TagSection, Request, MangaUpdates, SourceTag, TagType } from "paperback-extensions-common"
-const LH_DOMAIN = 'https://loveheaven.net'
+const LH_DOMAIN = 'https://unionmangas.top/'
 
 const b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 // Regular expression to check formal correctness of base64 encoded strings
@@ -37,14 +37,14 @@ const atob_polyfilled = (b64: string) => {
   return _atob(b64)
 }
 
-export class LoveHeaven extends Source {
+export class UnionMangas extends Source {
   constructor(cheerio: CheerioAPI) {
     super(cheerio)
   }
 
   get version(): string { return '0.2.2' }
-  get name(): string { return 'LoveHeaven' }
-  get description(): string { return 'Extension that pulls manga from LoveHeaven. Thumbnails are currently broken.' }
+  get name(): string { return 'UnionMangas' }
+  get description(): string { return 'Extension that pulls manga from UnionMangas. Thumbnails are currently broken.' }
   get author(): string { return 'chyyran' }
   get authorWebsite(): string { return 'http://github.com/chyyran' }
   get icon(): string { return "logo.png" }
